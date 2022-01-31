@@ -1,0 +1,94 @@
+## network size (2 geant (2x271) + external nodes that we will
+## to generate undos in the system and see how it behave.
+SIZE 543
+
+# parameters of periodic execution
+CYCLES 4000
+CYCLE 1
+
+# parameters of message transfer
+MINDELAY 10
+MAXDELAY 20
+
+random.seed 1
+network.size SIZE
+simulation.endtime CYCLES
+simulation.logtime CYCLE
+simulation.eventqueue fr.stack.transport.FIFO
+
+
+
+protocol.link fr.stack.peersampling.PeerSampling
+
+protocol.prt fr.stack.partitioners.ascast.ASPartitioner
+protocol.prt.linkable link
+protocol.prt.step CYCLE
+protocol.prt.transport tr
+protocol.prt.pid prt
+
+protocol.tr fr.stack.transport.LatencyTransport
+protocol.tr.from MINDELAY
+protocol.tr.to   MAXDELAY
+
+
+
+protocol.initlink peersim.core.IdleProtocol
+
+init.sch peersim.edsim.CDScheduler
+init.sch.protocol prt
+init.sch.randstart
+
+## use linkable to initialize peer samplers
+control.ps fr.stack.controllers.CNetworkInitializer
+control.ps.protocol prt
+control.ps.initlink initlink
+control.ps.weight_from 5
+control.ps.weight_to 15
+control.ps.at 1
+
+
+
+control.topo fr.stack.controllers.CTopologyExperiment
+control.topo.protocol prt
+control.topo.file topology/condensed_west_europe-inferred.gml
+control.topo.n 2
+control.topo.links 1
+control.topo.latency 200
+control.topo.adders 1
+control.topo.from 1
+control.topo.step CYCLE
+control.topo.until 10 
+## stop at 10 to not 
+
+control.undo fr.stack.controllers.CUndosExperiment
+control.undo.protocol prt
+control.undo.node 542
+control.undo.edges 3
+control.undo.crashes 2
+control.undo.crashAt 70
+control.undo.from 40
+control.undo.step CYCLE
+
+
+
+control.0 fr.stack.observers.ODistance
+control.0.protocol prt
+control.0.step CYCLE
+
+control.1 fr.stack.observers.OTraffic
+control.1.protocol prt
+control.1.step CYCLE
+
+control.3 fr.stack.observers.OMiss
+control.3.protocol prt
+control.3.network link
+control.3.step CYCLE
+control.3.from 2
+
+control.4 fr.stack.observers.ODegree
+control.4.protocol prt
+control.4.step CYCLE
+
+control.5 fr.stack.observers.OLocalSpace
+control.5.protocol prt
+control.5.step CYCLE

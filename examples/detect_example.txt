@@ -1,0 +1,125 @@
+# network size
+SIZE 10000
+
+# parameters of periodic execution
+CYCLES 800
+CYCLE 1
+
+# parameters of message transfer
+# delay values here are relative to cycle length, in percentage,
+# eg 50 means half the cycle length, 200 twice the cycle length, etc.
+MINDELAY 20
+MAXDELAY 40
+
+random.seed 5
+network.size SIZE
+simulation.endtime CYCLES
+simulation.logtime CYCLE
+simulation.eventqueue fr.stack.transport.FIFO
+
+
+
+protocol.link fr.stack.peersampling.PeerSampling
+
+protocol.prt fr.stack.partitioners.ascast.ASPartitioner
+protocol.prt.linkable link
+protocol.prt.step CYCLE
+protocol.prt.transport tr
+protocol.prt.pid prt
+
+protocol.tr fr.stack.transport.LatencyTransport
+protocol.tr.from MINDELAY
+protocol.tr.to   MAXDELAY
+
+
+
+protocol.initlink peersim.core.IdleProtocol
+
+init.rndlink peersim.dynamics.WireKOut
+init.rndlink.k 1
+init.rndlink.protocol initlink
+
+## ensure connected graph
+init.ring peersim.dynamics.WireRingLattice
+init.ring.k 1
+init.ring.protocol initlink
+ 
+init.sch peersim.edsim.CDScheduler
+init.sch.protocol prt
+init.sch.randstart
+
+## use linkable to initialize peer samplers
+control.ps fr.stack.controllers.CNetworkInitializer
+control.ps.protocol prt
+control.ps.initlink initlink
+control.ps.weight_from 15
+control.ps.weight_to 300
+control.ps.at 1
+
+
+
+# control.dyn fr.stack.controllers.CDynamicEdges
+# control.dyn.protocol prt
+# control.dyn.type ADD
+# # control.dyn.number 20
+# # control.dyn.at 50
+# control.dyn.number 2
+# control.dyn.from 50
+# control.dyn.step 1
+# control.dyn.until 60
+
+# control.dyn2 fr.stack.controllers.CDynamicEdges
+# control.dyn2.protocol prt
+# control.dyn2.type REM
+# # control.dyn2.number 50
+# # control.dyn2.at 70
+# control.dyn2.number 5
+# control.dyn2.from 70
+# control.dyn2.step 1
+# control.dyn2.until 80
+
+
+
+## create and remove partitions at random in the system
+control.add fr.stack.controllers.CDynamicPartitions
+control.add.protocol prt
+control.add.type ADD
+control.add.number 3
+control.add.at 30
+# control.add.from 10
+# control.add.step 5
+# control.add.until 80
+
+control.del fr.stack.controllers.CDynamicPartitions
+control.del.protocol prt
+control.del.type DEL
+control.del.number 1
+control.del.from 70
+control.del.step 10
+control.del.until 81
+
+
+
+control.0 fr.stack.observers.ODistance
+control.0.protocol prt
+control.0.step 1
+
+control.1 fr.stack.observers.OTraffic
+control.1.protocol prt
+control.1.step 1
+
+control.2 fr.stack.observers.OFinalCheck
+control.2.protocol prt
+control.2.network link
+control.2.at CYCLES - 1
+
+control.3 fr.stack.observers.OMiss
+control.3.protocol prt
+control.3.network link
+control.3.step 1
+control.3.from 2
+
+control.4 fr.stack.observers.ODegree
+control.4.protocol prt
+control.4.step CYCLE
+

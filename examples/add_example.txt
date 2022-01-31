@@ -1,0 +1,74 @@
+# network size
+SIZE 1000
+
+# parameters of periodic execution
+CYCLES 100
+CYCLE 1
+
+# parameters of message transfer
+# delay values here are relative to cycle length, in percentage,
+# eg 50 means half the cycle length, 200 twice the cycle length, etc.
+MINDELAY 1
+MAXDELAY 1
+# drop is a probability, 0<=DROP<=1
+DROP 0
+
+random.seed 1
+network.size SIZE
+simulation.endtime CYCLES
+simulation.logtime CYCLE
+
+
+
+protocol.link peersim.core.IdleProtocol
+
+protocol.prt fr.stack.addonly.Partitioner
+protocol.prt.linkable link
+protocol.prt.step CYCLE
+protocol.prt.transport tr
+protocol.prt.pid prt
+
+protocol.urt peersim.transport.UniformRandomTransport
+protocol.urt.mindelay MINDELAY
+protocol.urt.maxdelay MAXDELAY
+
+protocol.tr peersim.transport.UnreliableTransport
+protocol.tr.transport urt
+protocol.tr.drop DROP
+
+
+
+init.rndlink peersim.dynamics.WireKOut
+init.rndlink.k 1
+init.rndlink.protocol link
+
+## ensure connected graph
+init.ring peersim.dynamics.WireRingLattice
+init.ring.k 1
+init.ring.protocol link
+ 
+init.sch peersim.edsim.CDScheduler
+init.sch.protocol prt
+# init.sch.randstart
+
+
+
+control.bi fr.stack.controllers.CBidirectionalLinks
+control.bi.protocol prt
+control.bi.step 1
+
+control.add fr.stack.controllers.CDynamicPartitions
+control.add.protocol prt
+control.add.adders 1
+control.add.add_at 1
+control.add.step 1
+
+
+
+control.0 fr.stack.observers.CDistance
+control.0.protocol prt
+control.0.step CYCLE
+
+control.1 fr.stack.observers.CTraffic
+control.1.protocol prt
+control.1.step CYCLE

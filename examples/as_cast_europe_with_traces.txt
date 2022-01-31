@@ -1,0 +1,162 @@
+# network size
+SIZE 1157
+
+# parameters of periodic execution
+CYCLES  30000
+CYCLE 1
+
+# parameters of message transfer
+MINDELAY 150
+MAXDELAY 160
+
+random.seed 8
+network.size SIZE
+simulation.endtime CYCLES
+simulation.logtime CYCLE
+simulation.eventqueue fr.stack.transport.FIFO
+
+
+
+protocol.link fr.stack.peersampling.PeerSampling
+
+protocol.prt fr.stack.partitioners.ascast.ASPartitioner
+protocol.prt.linkable link
+protocol.prt.step CYCLE
+protocol.prt.transport tr
+protocol.prt.pid prt
+
+protocol.c fr.stack.replicator.Cache
+protocol.c.pid prt
+protocol.c.step CYCLE
+protocol.c.size 10
+protocol.c.favorite music
+
+protocol.tr fr.stack.transport.LatencyTransport
+protocol.tr.from MINDELAY
+protocol.tr.to   MAXDELAY
+
+
+
+protocol.initlink peersim.core.IdleProtocol
+
+init.sch peersim.edsim.CDScheduler
+init.sch.protocol prt
+init.sch2 peersim.edsim.CDScheduler
+init.sch2.protocol c
+
+## use linkable to initialize peer samplers
+control.ps fr.stack.controllers.CNetworkInitializer
+control.ps.protocol prt
+control.ps.initlink initlink
+control.ps.weight_from 5
+control.ps.weight_to 15
+control.ps.at 1
+
+
+
+control.topo fr.stack.controllers.CAutonomousSystems
+control.topo.protocol prt
+control.topo.file topology/interconnect.gml
+control.topo.at 1
+
+# workload lasting 100000 (1s) looping
+control.work fr.stack.controllers.CWorkload
+control.work.protocol c
+control.work.file topology/traces/all.gml
+control.work.content food
+control.work.contents 1000
+control.work.from 1000
+control.work.until CYCLES
+control.work.loop 1000
+control.work.step CYCLE
+
+## filling caches
+START 4000
+
+control.dnk fr.stack.controllers.CWorkload
+control.dnk.protocol c
+control.dnk.file topology/traces/dnk.gml
+control.dnk.content music
+control.dnk.from START
+control.dnk.until START+1000
+control.dnk.step CYCLE
+
+control.dnkdeu fr.stack.controllers.CWorkload
+control.dnkdeu.protocol c
+control.dnkdeu.file topology/traces/dnk-deu.gml
+control.dnkdeu.content music
+control.dnkdeu.from START+1000
+control.dnkdeu.until START+2000
+control.dnkdeu.step CYCLE
+
+control.deu fr.stack.controllers.CWorkload
+control.deu.protocol c
+control.deu.file topology/traces/deu.gml
+control.deu.content music
+control.deu.from START+2000
+control.deu.until START+3000
+control.deu.step CYCLE
+
+control.deufra fr.stack.controllers.CWorkload
+control.deufra.protocol c
+control.deufra.file topology/traces/deu-fra.gml
+control.deufra.content music
+control.deufra.from START+3000
+control.deufra.until START+4000
+control.deufra.step CYCLE
+
+control.fra fr.stack.controllers.CWorkload
+control.fra.protocol c
+control.fra.file topology/traces/fra.gml
+control.fra.content music
+control.fra.from START+4000
+control.fra.until START+5000
+control.fra.step CYCLE
+
+control.fraesp fr.stack.controllers.CWorkload
+control.fraesp.protocol c
+control.fraesp.file topology/traces/fra-esp.gml
+control.fraesp.content music
+control.fraesp.from START+5000
+control.fraesp.until START+6000
+control.fraesp.step CYCLE
+
+control.esp fr.stack.controllers.CWorkload
+control.esp.protocol c
+control.esp.file topology/traces/esp.gml
+control.esp.content music
+control.esp.from START+6000
+control.esp.until START+7000
+control.esp.step CYCLE
+
+
+
+# control.0 fr.stack.observers.ODistance
+# control.0.protocol prt
+# control.0.step CYCLE
+
+control.1 fr.stack.observers.OTraffic
+control.1.protocol prt
+control.1.step CYCLE
+
+control.3 fr.stack.observers.OMiss
+control.3.protocol prt
+control.3.network link
+control.3.step CYCLE
+control.3.from 2
+
+# control.4 fr.stack.observers.ODegree
+# control.4.protocol prt
+# control.4.step CYCLE
+
+control.5 fr.stack.observers.OLocalSpace
+control.5.protocol prt
+control.5.step CYCLE
+
+## control.6 fr.stack.observers.OFinalCheck
+## control.6.protocol prt
+## control.6.at CYCLE*CYCLES-1
+
+control.7 fr.stack.observers.OCacheSize
+control.7.pid c
+control.7.step CYCLE

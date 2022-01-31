@@ -1,0 +1,93 @@
+# network size
+SIZE 10000
+
+# parameters of periodic execution
+CYCLES 100000
+CYCLE 1
+
+# parameters of message transfer
+MINDELAY 20
+MAXDELAY 40
+
+NBPARTITIONS 100
+
+random.seed 5
+network.size SIZE
+simulation.endtime CYCLES
+simulation.logtime CYCLE
+simulation.eventqueue fr.stack.transport.FIFO
+
+
+
+protocol.link fr.stack.peersampling.PeerSampling
+
+protocol.prt fr.stack.partitioners.ascast.ASPartitioner
+protocol.prt.linkable link
+protocol.prt.step CYCLE
+protocol.prt.transport tr
+protocol.prt.pid prt
+
+protocol.tr fr.stack.transport.LatencyTransport
+protocol.tr.from MINDELAY
+protocol.tr.to   MAXDELAY
+
+
+
+protocol.initlink peersim.core.IdleProtocol
+
+init.rndlink peersim.dynamics.WireKOut
+init.rndlink.k 1
+init.rndlink.protocol initlink
+
+## ensure connected graph
+init.ring peersim.dynamics.WireRingLattice
+init.ring.k 1
+init.ring.protocol initlink
+ 
+init.sch peersim.edsim.CDScheduler
+init.sch.protocol prt
+init.sch.randstart
+
+## (TODO) get rid of this when only processing using
+## weights
+# control.bi fr.stack.controllers.CBidirectionalLinks
+# control.bi.protocol prt
+# control.bi.step 1
+
+## use linkable to initialize peer samplers
+control.ps fr.stack.controllers.CNetworkInitializer
+control.ps.protocol prt
+control.ps.initlink initlink
+control.ps.weight_from 5
+control.ps.weight_to 15
+control.ps.at 1
+
+
+
+## create and remove partitions at random in the system
+control.del fr.stack.controllers.CComplexityExperiment
+control.del.protocol prt
+control.del.number NBPARTITIONS
+control.del.from 100
+control.del.step 1
+
+
+
+control.0 fr.stack.observers.ODistance
+control.0.protocol prt
+control.0.step CYCLE
+
+control.1 fr.stack.observers.OTraffic
+control.1.protocol prt
+control.1.step CYCLE
+
+control.3 fr.stack.observers.OMiss
+control.3.protocol prt
+control.3.network link
+control.3.step CYCLE
+control.3.from 2
+
+control.4 fr.stack.observers.ODegree
+control.4.protocol prt
+control.4.step CYCLE
+
